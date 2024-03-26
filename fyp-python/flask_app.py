@@ -82,9 +82,12 @@ def handle_form():
     # Wait for approval for up to 5 minutes & execute read.py while loop.
     approval_status = "denied" # should default to denied
     start_time = time.time() # store start time as current time
+    print(f"Started timer at {start_time}")
     while time.time() - start_time < 300: # 5 minutes
         try:
             poll_approval = subprocess.run(['python3', 'fyp-python/read.py'], capture_output=True, text=True)
+            print(poll_approval.stdout)
+            print(f"Poll attempt executed. Time remaining {300-(time.time() - start_time)}")
             if "Approved" in poll_approval.stdout:
                 approval_status = "approved"
                 break

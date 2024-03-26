@@ -27,8 +27,10 @@ if result == 'OK':
         if is_uid_processed(num.decode('utf-8')):
             print(f"Email UID {num.decode('utf-8')} already processed, skipping.")
             continue # skip if already processed
+
         result, data = m.fetch(num, '(RFC822)')
-        if result == "OK":
+        print(result, data)
+        if result == "OK" and data[0] is not None:
             email_message = email.message_from_bytes(data[0][1])
     
             if email_message.is_multipart():
@@ -50,6 +52,9 @@ if result == 'OK':
                     store_processed_uid(num.decode('utf-8'))
                 else:
                     print("Denied")
+        else:
+            print(f"Failed to fetch or no data for UID {num.decode('utf-8')}")
+            print(result, data)
 m.close()
 m.logout()
 
