@@ -1,0 +1,11 @@
+# jd-fyp-backend
+
+# python folder
+__pycache__/
+vars/
+secret/
+
+# terraform
+.terraform/
+.terraform.lock.*
+terraform.*
