@@ -6,7 +6,7 @@ import os
 import subprocess
 import time
 from send import send_email
-
+from secret.config import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
 app = Flask(__name__)
 CORS(app)
 
@@ -63,7 +63,7 @@ def handle_form():
     operating_system = data.get('os', 'No OS provided')  # Be cautious with variable name 'os' as it's also a module name
     cpu_cores = data.get('cpu_cores', 'No CPU cores provided')
 
-    request_details = f"Name: {name}, Provider: {provider}, OS: {os}, CPU Cores: {cpu_cores}"    
+    request_details = f"Name: {hostname}, Provider: {provider}, OS: {operating_system}, CPU Cores: {cpu_cores}"    
     time_requested = data.get('date')
     requester_email = data.get('email', 'No email provided')
     subject = "Approval Request | PLEASE REPLY"

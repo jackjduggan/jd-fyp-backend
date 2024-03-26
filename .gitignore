@@ -4,6 +4,7 @@
 __pycache__/
 vars/
 secret/
+db/
 
 # terraform
 .terraform/

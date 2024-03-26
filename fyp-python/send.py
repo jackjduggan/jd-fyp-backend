@@ -1,7 +1,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-#from secret import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
+from secret.config import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
 
 def send_email(
     sender_email, 

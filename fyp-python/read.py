@@ -1,7 +1,7 @@
 import imaplib
 import email
 import os
-from secret import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
+from secret.config import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
 
 m = imaplib.IMAP4_SSL("imap.gmail.com", 993)
 m.login(SENDER_EMAIL, SENDER_PASSWORD) # login with email & passkey
