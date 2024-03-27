@@ -65,12 +65,13 @@ def send_email(
     <div class="email-container">
         <img src="https://raw.githubusercontent.com/jackjduggan/email-approval-system/main/images/InProv-logo-light-removebg-preview.png" alt="Company Logo" class="logo">
         <h2>Approval Request</h2>
-        <p class="content">A new server is requesting approval.<br>
-            Request Details: {request_details}<br>
-            Time Requested: {time_requested}<br>
-            Requester's Email: {requester_email}<br>
-            Request Unique ID: {unique_id}<br>
-        Provisioning will not begin until approved. Please reply to this email with <strong>Approve</strong> to approve, or <strong>Deny</strong> to deny.</p>
+        <p class="content">A new server is requesting approval.<br><br>
+            <strong>Request Details</strong>: {request_details}<br>
+            <strong>Time Requested</strong>: {time_requested}<br>
+            <strong>Requester's Email</strong>: {requester_email}<br>
+            <strong>Request Unique ID</strong>: {unique_id}<br><br>
+        Provisioning will not begin until approved.<br> 
+        Please reply to this email with <strong>Approve</strong> to approve, or <strong>Deny</strong> to deny.</p>
         <a href="mailto:{sender_email}?subject=Approval Request - Approve&body=Approve" class="button button-approve">Approve</a>
         <a href="mailto:{sender_email}?subject=Approval Request - Deny&body=Deny" class="button button-deny">Deny</a>
     </div>
@@ -100,17 +101,5 @@ def send_email(
 
     # Close the SMTP session
     server.quit()
-
-# Example usage
-# sender_email = SENDER_EMAIL
-# sender_password = SENDER_PASSWORD
-# receiver_email = RECEIVER_EMAIL
-# subject = "Approval Request | PLEASE REPLY"
-# request_details = "Server XYZ"
-# time_requested = "2023-03-26 12:03"
-# requester_email = "test@email.com"
-# unique_id = "12345-12345-12334-35312"
-
-#send_email(sender_email, sender_password, receiver_email, subject, request_details, time_requested, requester_email, unique_id)
 
 # ref: https://medium.com/@thakuravnish2313/sending-emails-with-python-using-the-smtplib-library-e5db3a8ce69a
