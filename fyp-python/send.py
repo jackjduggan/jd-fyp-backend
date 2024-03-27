@@ -69,7 +69,7 @@ def send_email(
             <strong>Request Details</strong>: {request_details}<br>
             <strong>Time Requested</strong>: {time_requested}<br>
             <strong>Requester's Email</strong>: {requester_email}<br>
-            <strong>Request Unique ID</strong>: {unique_id}<br>
+            <strong>Request Unique ID</strong>: {unique_id}<br><br>
         Provisioning will not begin until approved.<br> 
         Please reply to this email with <strong>Approve</strong> to approve, or <strong>Deny</strong> to deny.</p>
         <a href="mailto:{sender_email}?subject=Approval Request - Approve&body=Approve" class="button button-approve">Approve</a>

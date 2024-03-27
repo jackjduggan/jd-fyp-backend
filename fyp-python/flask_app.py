@@ -67,8 +67,9 @@ def handle_form():
     <i>Hostname:</i> {hostname}<br>
     <i>Provider:</i> {provider}<br>
     <i>OS:</i> {operating_system}<br>
-    <i>CPU Cores:</i> {cpu_cores}<br>
+    <i>CPU Cores:</i> {cpu_cores}
     """
+
     time_requested = data.get('date')
     requester_email = data.get('email', 'No email provided')
     subject = "Approval Request | PLEASE REPLY"

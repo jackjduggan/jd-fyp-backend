@@ -12,8 +12,9 @@ echo "Hostname value provided: $hostname_value"
 
 # Initialize Terraform
 echo "Initializing Terraform..."
-terraform init
+#terraform init
 
 # Apply the Terraform configuration, passing the hostname as a variable
 echo "Applying Terraform with hostname: $hostname_value"
-terraform apply -var="hostname=$hostname_value" -auto-approve
+#terraform apply -var="hostname=$hostname_value" -auto-approve
+echo "Script working.. futher functionality WIP. Press CRTL+C to end."
