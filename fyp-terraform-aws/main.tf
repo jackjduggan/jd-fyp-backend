@@ -59,8 +59,8 @@ data "template_file" "user_data" {
 }
 
 resource "aws_instance" "app_server" {
-  ami                    = var.instance_ami
-  instance_type          = var.instance_type
+  ami                    = lookup(local.os_to_ami, var.operating_system, "ami-0c7217cdde317cfec") # defaults to ubuntu if issue
+  instance_type          = lookup(local.num_cores_to_instance_type, var.cpu_cores, "t2.micro")
   user_data              = data.template_file.user_data.rendered
   vpc_security_group_ids = [aws_security_group.puppet-test-sg.id]
 
