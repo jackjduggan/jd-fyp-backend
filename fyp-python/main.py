@@ -6,6 +6,7 @@ import os
 import subprocess
 import time
 from send import send_email
+from logic import execute_terraform_script
 from secret.config import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
 app = Flask(__name__)
 CORS(app)
@@ -115,50 +116,53 @@ def handle_form():
     ### --------------------------------------------------------------------
     # EXECUTE SCRIPT
     ###
-
-    if approval_status == "approved": # proceed only if approved
+    if approval_status == "approved":  # proceed only if approved
         try:
             print("Approval received. Attempting to execute the bash script with provided data...")
-            run_script(data)
+            provider = data.get('provider', 'aws')  # Defaulting to AWS
+            hostname = data.get('name', 'No name provided')
+            operating_system = data.get('os', 'No OS provided')
+            cpu_cores = data.get('cpu_cores', '1')
+            execute_terraform_script(provider, hostname, operating_system, cpu_cores)
         except Exception as e:
-            print(f"Error executing bash script: {e}")
-            return {"error": "Failed to execute the script"}, 500
+            print(f"Error executing Terraform provisioning script: {e}")
+            return {"error": "Failed to execute the Terraform provisioning script"}, 500
 
-        return {"message": "Data saved and script executed successfully"}, 200
+    return {"message": "Data saved and script executed successfully"}, 200
 
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # SCRIPT FUNCTION
 ###
 
-def run_script(data):
-    terraform_dir = '/home/jackd/Code/fyp-skeleton/fyp-terraform'
-    script_path = os.path.join(terraform_dir, 'run-terraform.sh')
+# def run_script(data):
+#     terraform_dir = '/home/jackd/Code/fyp-skeleton/fyp-terraform'
+#     script_path = os.path.join(terraform_dir, 'run-terraform.sh')
 
-    if not os.path.exists(script_path):
-        print("Script file not found.")
-        raise FileNotFoundError("run-terraform.sh script not found.")
+#     if not os.path.exists(script_path):
+#         print("Script file not found.")
+#         raise FileNotFoundError("run-terraform.sh script not found.")
 
-    # Extracting the hostname from the data
-    hostname = data.get('name')
-    unique_id = data.get('uid')
-    if not hostname:
-        print("Hostname not provided in the data.")
-        return {"error": "Hostname not provided"}, 400
+#     # Extracting the hostname from the data
+#     hostname = data.get('name')
+#     unique_id = data.get('uid')
+#     if not hostname:
+#         print("Hostname not provided in the data.")
+#         return {"error": "Hostname not provided"}, 400
 
-    try:
-        print("Found the script file. Executing...")
-        # Passing the hostname as a command-line argument
-        result = subprocess.run(['bash', script_path, hostname], capture_output=True, cwd=terraform_dir, text=True)
+#     try:
+#         print("Found the script file. Executing...")
+#         # Passing the hostname as a command-line argument
+#         result = subprocess.run(['bash', script_path, hostname], capture_output=True, cwd=terraform_dir, text=True)
 
-        print("Script executed.")
-        if result.returncode != 0:
-            print(f"Script execution failed: {result.stderr}")
-            raise Exception(result.stderr)
+#         print("Script executed.")
+#         if result.returncode != 0:
+#             print(f"Script execution failed: {result.stderr}")
+#             raise Exception(result.stderr)
 
-    except Exception as e:
-        print(f"Error executing bash script: {e}")
-        raise
+#     except Exception as e:
+#         print(f"Error executing bash script: {e}")
+#         raise
 
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
