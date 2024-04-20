@@ -5,11 +5,13 @@ import uuid
 import os
 import subprocess
 import time
+from flask_socketio import SocketIO
 from send import send_email
 from logic import execute_terraform_script
 from secret.config import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app)
 
 # vars
 #current_dir = "/home/jackduggan01/Projects/fyp-backend" # desktop vm
@@ -28,6 +30,7 @@ def handle_form():
 
     data = request.json
     print("Received data:", data)
+    socketio.emit('status_update', {'message': 'Your request has been received!'})
 
     # Generate a unique filename and ensure the vars/ directory exists
     unique_id = uuid.uuid4()
@@ -78,6 +81,7 @@ def handle_form():
 
     # Send the approval request email
     send_email(SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL, subject, request_details, time_requested, requester_email, str(unique_id))
+    socketio.emit('status_update', {'message': 'Your request has been forwarded for approval'})
     # try:
     #     print("Sending approval request email...")
     #     subprocess.run(['python3', 'fyp-python/send.py'], check=True)
@@ -109,6 +113,7 @@ def handle_form():
         with open(unique_filename, 'w') as file:
             json.dump(data, file, indent=4)
         print(f"Data updated with approval status: {approval_status}")
+        socketio.emit('status_update', {'message': 'Approval received. Initializing provisioning.'})
     except Exception as e:
         print(f"Error updating data file with approval status: {e}")
         return {"error": "Failed to update data with approval status"}, 500
@@ -170,4 +175,5 @@ def handle_form():
 ###
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    #app.run(debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
