@@ -43,7 +43,7 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores):
         return
 
 # Example call
-execute_terraform_script("aws", "testing-logic-provisoning", "ubuntu", "2")
+#execute_terraform_script("aws", "testing-logic-provisoning", "ubuntu", "2")
 
 
 
