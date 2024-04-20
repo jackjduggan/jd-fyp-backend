@@ -6,7 +6,7 @@ The purpose of this script is to direct the pipeline depending
 upon the request details
 """
 
-def execute_terraform_script(provider, hostname, operating_system, cpu_cores, websocket_uri):
+def execute_terraform_script(provider, hostname, operating_system, cpu_cores, unique_filename, callback):
 
     provider = provider.lower() # ensure it's lower-case
     original_dir = os.getcwd()
@@ -45,14 +45,32 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, we
         ip_address = result.stdout.strip()
         print(f"Provisioned IP address: {ip_address}")
 
+
+        try:
+            with open(unique_filename, 'r+') as file:
+                data = json.load(file)
+                data['server_ip'] = ip_address
+                file.seek(0)
+                json.dump(data, file, indent=4)
+                file.truncate()
+
+            # Call the callback to start the IP update process
+            if callback:
+                callback(unique_filename)
+
+        except Exception as e:
+            print(f"Failed to update JSON file with IP address: {e}")
+
+
         # Send IP address via WebSocket
-        asyncio.run(send_ip_via_websocket(websocket_uri, ip_address))
+        #asyncio.run(send_ip_via_websocket(websocket_uri, ip_address))
 
     except subprocess.CalledProcessError as e:
         print(f"Failed to execute Terraform script: {e}")
 
 async def send_ip_via_websocket(uri, ip_address):
     async with websockets.connect(uri) as websocket:
+        print("Attempting to send IP via WebSocket.")
         await websocket.send(json.dumps({'type': 'ip_address', 'ip': ip_address}))
         print("IP address sent via WebSocket.")
 

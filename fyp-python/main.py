@@ -127,12 +127,43 @@ def handle_form():
             hostname = data.get('name', 'No name provided')
             operating_system = data.get('os', 'No OS provided')
             cpu_cores = data.get('cpu_cores', '1')
-            execute_terraform_script(provider, hostname, operating_system, cpu_cores, socketio)
+            absolute_unique_filename = os.path.abspath(unique_filename)
+            
+            # Start thread only after script has successfully executed and updated the IP
+            from threading import Thread
+            # Adjust the lambda to accept an argument and pass it to the thread
+            execute_terraform_script(provider, hostname, operating_system, cpu_cores, absolute_unique_filename, 
+                                  lambda filename=absolute_unique_filename: Thread(target=wait_and_emit_ip_update, args=(filename,)).start())
+
         except Exception as e:
             print(f"Error executing Terraform provisioning script: {e}")
             return {"error": "Failed to execute the Terraform provisioning script"}, 500
 
     return {"message": "Data saved and script executed successfully"}, 200
+
+def wait_and_emit_ip_update(unique_filename, timeout=600):
+    start_time = time.time()
+    print("Starting to monitor the JSON file for the server IP...")
+    while time.time() - start_time < timeout:
+        try:
+            with open(unique_filename, 'r') as file:
+                data = json.load(file)
+                print(f"Read from file: {unique_filename} - Data: {data}")
+                if 'server_ip' in data:
+                    socketio.emit('server_ip_update', {'server_ip': data['server_ip']})
+                    print(f"Emitted server IP: {data['server_ip']}")
+                    return data['server_ip']
+                else:
+                    print("Server IP not yet available in file.")
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e} - File may be incomplete.")
+        except FileNotFoundError:
+            print(f"File not found: {unique_filename} - It may not be created yet.")
+        except Exception as e:
+            print(f"Unexpected error while reading the file: {e}")
+        time.sleep(10)  # Sleep before checking again
+    print("Timeout reached without finding the server IP.")
+    socketio.emit('error', {'message': 'Server IP was not found within the allowed time.'})
 
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -141,4 +172,4 @@ def handle_form():
 
 if __name__ == '__main__':
     #app.run(debug=True, host='0.0.0.0', port=5000)
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)   
