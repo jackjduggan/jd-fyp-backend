@@ -1,11 +1,12 @@
-import subprocess, os
+import subprocess, os, json
+import asyncio, websockets
 
 """
 The purpose of this script is to direct the pipeline depending
 upon the request details
 """
 
-def execute_terraform_script(provider, hostname, operating_system, cpu_cores):
+def execute_terraform_script(provider, hostname, operating_system, cpu_cores, websocket_uri):
 
     provider = provider.lower() # ensure it's lower-case
     original_dir = os.getcwd()
@@ -38,9 +39,22 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores):
     try:
         subprocess.run(["sh", script_path, hostname, operating_system, cpu_cores], check=True)
         print("Terraform script executed successfully.")
+
+        # Fetch output for IP address
+        result = subprocess.run(["terraform", "output", "--raw", "instance_ip"], capture_output=True, text=True)
+        ip_address = result.stdout.strip()
+        print(f"Provisioned IP address: {ip_address}")
+
+        # Send IP address via WebSocket
+        asyncio.run(send_ip_via_websocket(websocket_uri, ip_address))
+
     except subprocess.CalledProcessError as e:
         print(f"Failed to execute Terraform script: {e}")
-        return
+
+async def send_ip_via_websocket(uri, ip_address):
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(json.dumps({'type': 'ip_address', 'ip': ip_address}))
+        print("IP address sent via WebSocket.")
 
 # Example call
 #execute_terraform_script("aws", "testing-logic-provisoning", "ubuntu", "2")
