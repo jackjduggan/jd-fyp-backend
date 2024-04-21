@@ -5,14 +5,17 @@ import uuid
 import os
 import subprocess
 import time
+from flask_socketio import SocketIO
 from send import send_email
+from logic import execute_terraform_script
 from secret.config import SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # vars
-current_dir = "/home/jackduggan01/Projects/fyp-backend" # desktop vm
-#current_dir = "/home/jack/Code/fyp-backend" # laptop vm
+#current_dir = "/home/jackduggan01/Projects/fyp-backend" # desktop vm
+current_dir = "/home/jack/Code/fyp-backend" # laptop vm
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # FORM HANDLE & APPROVAL FUNCTION
@@ -77,6 +80,7 @@ def handle_form():
 
     # Send the approval request email
     send_email(SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL, subject, request_details, time_requested, requester_email, str(unique_id))
+    socketio.emit('status_update', {'message': 'Your request has been forwarded for approval'})
     # try:
     #     print("Sending approval request email...")
     #     subprocess.run(['python3', 'fyp-python/send.py'], check=True)
@@ -108,6 +112,7 @@ def handle_form():
         with open(unique_filename, 'w') as file:
             json.dump(data, file, indent=4)
         print(f"Data updated with approval status: {approval_status}")
+        socketio.emit('status_update', {'message': 'Approval received. Initializing provisioning.'})
     except Exception as e:
         print(f"Error updating data file with approval status: {e}")
         return {"error": "Failed to update data with approval status"}, 500
@@ -115,50 +120,50 @@ def handle_form():
     ### --------------------------------------------------------------------
     # EXECUTE SCRIPT
     ###
-
-    if approval_status == "approved": # proceed only if approved
+    if approval_status == "approved":  # proceed only if approved
         try:
             print("Approval received. Attempting to execute the bash script with provided data...")
-            run_script(data)
+            provider = data.get('provider', 'aws')  # Defaulting to AWS
+            hostname = data.get('name', 'No name provided')
+            operating_system = data.get('os', 'No OS provided')
+            cpu_cores = data.get('cpu_cores', '1')
+            absolute_unique_filename = os.path.abspath(unique_filename)
+            
+            # Start thread only after script has successfully executed and updated the IP
+            from threading import Thread
+            # Adjust the lambda to accept an argument and pass it to the thread
+            execute_terraform_script(provider, hostname, operating_system, cpu_cores, absolute_unique_filename, 
+                                  lambda filename=absolute_unique_filename: Thread(target=wait_and_emit_ip_update, args=(filename,)).start())
+
         except Exception as e:
-            print(f"Error executing bash script: {e}")
-            return {"error": "Failed to execute the script"}, 500
+            print(f"Error executing Terraform provisioning script: {e}")
+            return {"error": "Failed to execute the Terraform provisioning script"}, 500
 
-        return {"message": "Data saved and script executed successfully"}, 200
+    return {"message": "Data saved and script executed successfully"}, 200
 
-
-### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# SCRIPT FUNCTION
-###
-
-def run_script(data):
-    terraform_dir = '/home/jackd/Code/fyp-skeleton/fyp-terraform'
-    script_path = os.path.join(terraform_dir, 'run-terraform.sh')
-
-    if not os.path.exists(script_path):
-        print("Script file not found.")
-        raise FileNotFoundError("run-terraform.sh script not found.")
-
-    # Extracting the hostname from the data
-    hostname = data.get('name')
-    unique_id = data.get('uid')
-    if not hostname:
-        print("Hostname not provided in the data.")
-        return {"error": "Hostname not provided"}, 400
-
-    try:
-        print("Found the script file. Executing...")
-        # Passing the hostname as a command-line argument
-        result = subprocess.run(['bash', script_path, hostname], capture_output=True, cwd=terraform_dir, text=True)
-
-        print("Script executed.")
-        if result.returncode != 0:
-            print(f"Script execution failed: {result.stderr}")
-            raise Exception(result.stderr)
-
-    except Exception as e:
-        print(f"Error executing bash script: {e}")
-        raise
+def wait_and_emit_ip_update(unique_filename, timeout=600):
+    start_time = time.time()
+    print("Starting to monitor the JSON file for the server IP...")
+    while time.time() - start_time < timeout:
+        try:
+            with open(unique_filename, 'r') as file:
+                data = json.load(file)
+                print(f"Read from file: {unique_filename} - Data: {data}")
+                if 'server_ip' in data:
+                    socketio.emit('server_ip_update', {'server_ip': data['server_ip']})
+                    print(f"Emitted server IP: {data['server_ip']}")
+                    return data['server_ip']
+                else:
+                    print("Server IP not yet available in file.")
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e} - File may be incomplete.")
+        except FileNotFoundError:
+            print(f"File not found: {unique_filename} - It may not be created yet.")
+        except Exception as e:
+            print(f"Unexpected error while reading the file: {e}")
+        time.sleep(10)  # Sleep before checking again
+    print("Timeout reached without finding the server IP.")
+    socketio.emit('error', {'message': 'Server IP was not found within the allowed time.'})
 
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -166,4 +171,5 @@ def run_script(data):
 ###
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    #app.run(debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)   

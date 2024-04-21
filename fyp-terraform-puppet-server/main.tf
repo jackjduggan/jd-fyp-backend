@@ -15,10 +15,6 @@ provider "aws" {
 
 resource "aws_security_group" "puppet-sg" {
   name = "puppet-sg"
-}
-
-resource "aws_security_group" "puppet-test-sg" {
-  name = "puppet-test-sg"
 
   # Ingress rule for port 80
   ingress {
@@ -41,7 +37,7 @@ resource "aws_security_group" "puppet-test-sg" {
     from_port       = 0
     to_port         = 65535
     protocol        = "tcp"
-    security_groups = [aws_security_group.puppet-sg.id]
+    # security_groups = [aws_security_group.puppet-sg.id]
   }
 
   # Ingress rule for SSH on port 22
@@ -50,7 +46,7 @@ resource "aws_security_group" "puppet-test-sg" {
     to_port         = 22
     protocol        = "tcp"
     cidr_blocks     = ["0.0.0.0/0"]
-    security_groups = [aws_security_group.puppet-sg.id]
+    # security_groups = [aws_security_group.puppet-sg.id]
   }
 }
 
@@ -62,7 +58,7 @@ resource "aws_instance" "app_server" {
   ami                    = var.instance_ami
   instance_type          = var.instance_type
   user_data              = data.template_file.user_data.rendered
-  vpc_security_group_ids = [aws_security_group.puppet-test-sg.id]
+  vpc_security_group_ids = [aws_security_group.puppet-sg.id]
 
   tags = merge(var.instance_tags, {
     Name = var.hostname
