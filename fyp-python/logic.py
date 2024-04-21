@@ -6,7 +6,7 @@ The purpose of this script is to direct the pipeline depending
 upon the request details
 """
 
-def execute_terraform_script(provider, hostname, operating_system, cpu_cores, unique_filename, callback):
+def execute_terraform_script(provider, hostname, operating_system, cpu_cores, unique_filename, callback=None):
 
     provider = provider.lower() # ensure it's lower-case
     original_dir = os.getcwd()
@@ -53,8 +53,7 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, un
                 file.seek(0)
                 json.dump(data, file, indent=4)
                 file.truncate()
-
-            # Call the callback to start the IP update process
+            
             if callback:
                 callback(unique_filename)
 
