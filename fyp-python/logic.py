@@ -55,15 +55,19 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, un
                 file.seek(0)
                 json.dump(data, file, indent=4)
                 file.truncate()
-            
-            print("IP address added to JSON file.")
+                print("IP address added to JSON file.")
 
-            send_details_email(
-                sender_email=SENDER_EMAIL,
-                sender_password=SENDER_PASSWORD,
-                receiver_email=data['email'],
-                machine_data=data
-            )
+                if 'server_ip' in data:
+                    print("Updated machine data:", data)
+                    send_details_email(
+                        sender_email=SENDER_EMAIL,
+                        sender_password=SENDER_PASSWORD,
+                        receiver_email=data['email'],
+                        machine_data=data
+                    )
+                    print("Details email sent.")
+                else:
+                    print("NO IP address to send in the details email.")
             
             if callback:
                 callback(unique_filename)

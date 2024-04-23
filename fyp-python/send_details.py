@@ -8,6 +8,8 @@ def send_details_email(
     sender_password, 
     receiver_email,
     machine_data):
+    print("Debug: Sending email with the following machine data:")
+    print(machine_data)
 
     # Set up the SMTP server
     smtp_server = "smtp.gmail.com"
@@ -63,9 +65,9 @@ def send_details_email(
         <img src="https://raw.githubusercontent.com/jackjduggan/email-approval-system/main/images/InProv-logo-light-removebg-preview.png" alt="Company Logo" class="logo">
         <h2>Provisioning Complete</h2>
         <p class="content">Your requested machine has been successfully provisioned.<br><br>
-            <strong>Hostname:</strong> {machine_data.get('hostname', 'N/A')}<br>
-            <strong>IP Address:</strong> {machine_data.get('ip_address', 'N/A')}<br>
-            <strong>Operating System:</strong> {machine_data.get('operating_system', 'N/A')}<br>
+            <strong>Hostname:</strong> {machine_data.get('name', 'N/A')}<br>
+            <strong>IP Address:</strong> {machine_data.get('server_ip', 'N/A')}<br>
+            <strong>Operating System:</strong> {machine_data.get('os', 'N/A')}<br>
             <strong>Provider:</strong> {machine_data.get('provider', 'N/A')}<br>
             <strong>CPU Cores:</strong> {machine_data.get('cpu_cores', 'N/A')}<br>
         Please note that server configuration may still be in process.<br> 
@@ -99,13 +101,3 @@ def send_details_email(
     server.quit()
 
 # ref: https://medium.com/@thakuravnish2313/sending-emails-with-python-using-the-smtplib-library-e5db3a8ce69a
-    
-# Example usage:
-machine_data = {
-    'hostname': 'example-server',
-    'ip_address': '192.168.1.100',
-    'operating_system': 'Ubuntu 20.04',
-    'provider': 'AWS',
-    'cpu_cores': '4'
-}
-send_details_email(SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL, machine_data)
