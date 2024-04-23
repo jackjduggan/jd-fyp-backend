@@ -1,5 +1,7 @@
 import subprocess, os, json
-import asyncio, websockets
+from send_details import send_details_email
+from secret.config import SENDER_EMAIL, SENDER_PASSWORD
+
 
 """
 The purpose of this script is to direct the pipeline depending
@@ -54,6 +56,15 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, un
                 json.dump(data, file, indent=4)
                 file.truncate()
             
+            print("IP address added to JSON file.")
+
+            send_details_email(
+                sender_email=SENDER_EMAIL,
+                sender_password=SENDER_PASSWORD,
+                receiver_email=data['email'],
+                machine_data=data
+            )
+            
             if callback:
                 callback(unique_filename)
 
@@ -66,12 +77,7 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, un
 
     except subprocess.CalledProcessError as e:
         print(f"Failed to execute Terraform script: {e}")
-
-async def send_ip_via_websocket(uri, ip_address):
-    async with websockets.connect(uri) as websocket:
-        print("Attempting to send IP via WebSocket.")
-        await websocket.send(json.dumps({'type': 'ip_address', 'ip': ip_address}))
-        print("IP address sent via WebSocket.")
+        os.chdir(original_dir)
 
 # Example call
 #execute_terraform_script("aws", "testing-logic-provisoning", "ubuntu", "2")
