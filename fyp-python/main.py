@@ -5,6 +5,7 @@ import uuid
 import os
 import subprocess
 import time
+import boto3
 from flask_socketio import SocketIO
 from send import send_email
 from threading import Thread
@@ -118,19 +119,42 @@ def handle_form():
     if approval_status == "approved":  # proceed only if approved
         try:
             print("Approval received. Attempting to execute the bash script with provided data...")
-            provider = data.get('provider', 'aws')  # Defaulting to AWS
+
+            provider = data.get('provider', 'AWS')  # Defaulting to AWS
             hostname = data.get('name', 'No name provided')
             operating_system = data.get('os', 'No OS provided')
             cpu_cores = data.get('cpu_cores', '1')
-            absolute_unique_filename = os.path.abspath(unique_filename)
+            absolute_unique_filename = os.path.abspath(unique_filename) # fixes problem with relative paths
 
+            # Executes function in logic.py, which diverts the pipeline depending on the cloud provider.
             execute_terraform_script(provider, hostname, operating_system, cpu_cores, absolute_unique_filename)
+
+            s3_bucket_name = "inprov-requests"
+            if upload_file_to_s3(absolute_unique_filename, s3_bucket_name):
+                print("File successfully uploaded to S3.")
+            else:
+                print("Failed to upload file to S3.")
+
+            socketio.emit('status_update', {'message': 'Provisioning complete. Please check your email for details.'})
+
             
         except Exception as e:
             print(f"Error executing Terraform provisioning script: {e}")
             return {"error": "Failed to execute the Terraform provisioning script"}, 500
 
     return {"message": "Data saved and script executed successfully"}, 200
+
+def upload_file_to_s3(file_name, bucket):
+
+    file_base_name = os.path.basename(file_name)
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.upload_file(file_name, bucket, file_base_name)
+    except Exception as e:
+        print(f"Error uploading file to S3: {e}")
+        return False
+    return True
+
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # SERVER EXECUTION
