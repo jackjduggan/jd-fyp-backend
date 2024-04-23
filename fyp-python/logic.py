@@ -8,7 +8,7 @@ The purpose of this script is to direct the pipeline depending
 upon the request details
 """
 
-def execute_terraform_script(provider, hostname, operating_system, cpu_cores, unique_filename, callback=None):
+def execute_terraform_script(provider, hostname, operating_system, cpu_cores, unique_filename):
 
     provider = provider.lower() # ensure it's lower-case
     original_dir = os.getcwd()
@@ -42,21 +42,22 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, un
         subprocess.run(["sh", script_path, hostname, operating_system, cpu_cores], check=True)
         print("Terraform script executed successfully.")
 
-        # Fetch output for IP address
+        # Fetch output for IP address with terraform output --raw
         result = subprocess.run(["terraform", "output", "--raw", "instance_ip"], capture_output=True, text=True)
         ip_address = result.stdout.strip()
         print(f"Provisioned IP address: {ip_address}")
 
-
         try:
             with open(unique_filename, 'r+') as file:
                 data = json.load(file)
+                # save server IP to JSON file
                 data['server_ip'] = ip_address
                 file.seek(0)
                 json.dump(data, file, indent=4)
                 file.truncate()
                 print("IP address added to JSON file.")
 
+                # checks that server_ip is in the JSON file before sending details email.
                 if 'server_ip' in data:
                     print("Updated machine data:", data)
                     send_details_email(
@@ -68,23 +69,13 @@ def execute_terraform_script(provider, hostname, operating_system, cpu_cores, un
                     print("Details email sent.")
                 else:
                     print("NO IP address to send in the details email.")
-            
-            if callback:
-                callback(unique_filename)
 
         except Exception as e:
             print(f"Failed to update JSON file with IP address: {e}")
 
-
-        # Send IP address via WebSocket
-        #asyncio.run(send_ip_via_websocket(websocket_uri, ip_address))
-
     except subprocess.CalledProcessError as e:
         print(f"Failed to execute Terraform script: {e}")
         os.chdir(original_dir)
-
-# Example call
-#execute_terraform_script("aws", "testing-logic-provisoning", "ubuntu", "2")
 
 
 

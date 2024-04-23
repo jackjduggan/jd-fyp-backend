@@ -123,36 +123,14 @@ def handle_form():
             operating_system = data.get('os', 'No OS provided')
             cpu_cores = data.get('cpu_cores', '1')
             absolute_unique_filename = os.path.abspath(unique_filename)
-            queue = Queue()
-            execute_terraform_script(provider, hostname, operating_system, cpu_cores, absolute_unique_filename,
-                                  lambda ip_address: queue.put(ip_address))
-            thread = Thread(target=wait_and_emit_ip_update, args=(absolute_unique_filename, queue))
-            thread.start()
-            thread.join()
-            server_ip = queue.get()
-            if server_ip:
-                socketio.emit('server_ip_update', {'server_ip': server_ip})
-            else:
-                socketio.emit('error', {'message': 'Failed to get server IP within the expected time.'})
+
+            execute_terraform_script(provider, hostname, operating_system, cpu_cores, absolute_unique_filename)
+            
         except Exception as e:
             print(f"Error executing Terraform provisioning script: {e}")
             return {"error": "Failed to execute the Terraform provisioning script"}, 500
 
     return {"message": "Data saved and script executed successfully"}, 200
-
-def wait_and_emit_ip_update(unique_filename, queue, timeout=600):
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            with open(unique_filename, 'r') as file:
-                data = json.load(file)
-            if 'server_ip' in data:
-                queue.put(data['server_ip'])
-                return
-        except Exception as e:
-            print(f"Error checking for IP address: {e}")
-        time.sleep(10)
-    queue.put(None) 
 
 ### -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # SERVER EXECUTION
