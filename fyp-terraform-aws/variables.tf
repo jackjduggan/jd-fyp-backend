@@ -17,8 +17,7 @@ variable "cpu_cores" { # formerly "instance_type"
 # Mapping definition to map os to ami and cpu_cores to type
 locals {
   os_to_ami = {
-    "ubuntu" = "ami-0c7217cdde317cfec", # Ubuntu 22.04
-    "al2" = "ami-0c101f26f147fa7fd" # Amazon Linux
+    "Ubuntu" = "ami-0c7217cdde317cfec", # Ubuntu 22.04
   }
 
   num_cores_to_instance_type = {

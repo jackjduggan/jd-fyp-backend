@@ -28,8 +28,7 @@ variable "cpu_cores" {
 
 locals {
   os_to_image = {
-    "ubuntu" = "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
-    "al2"    = "projects/gce-uefi-images/global/images/family/rhel-8"
+    "Ubuntu" = "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
   }
 
   num_cores_to_instance_type = {
